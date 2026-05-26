@@ -60,7 +60,7 @@ kubevirt-ppc64le/
 | KubeVirt    | v1.8.2                          |
 | Go          | 1.24.9                          |
 | GCC         | 8.5.0                           |
-| GPU         | 2x Tesla V100-SXM2-16GB         |
+| GPU         | 4x Tesla V100-SXM2-16GB         |
 
 ## Prerequisites
 
