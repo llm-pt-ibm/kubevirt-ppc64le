@@ -1,12 +1,12 @@
-# KubeVirt em ppc64le (IBM POWER9)
+# KubeVirt on ppc64le (IBM POWER9)
 
-Adaptação do [KubeVirt](https://kubevirt.io/) v1.8.2 para a arquitetura IBM POWER9 (ppc64le), permitindo criar e gerenciar máquinas virtuais via Kubernetes em uma arquitetura não suportada oficialmente.
+Adaptation of [KubeVirt](https://kubevirt.io/) v1.8.2 for the IBM POWER9 architecture (ppc64le), enabling the creation and management of virtual machines via Kubernetes on an architecture not officially supported.
 
-> **Post relacionado:** [Executando VMs com KubeVirt na IBM Power9](https://llm-pt-ibm.github.io/posts/kubevirt_ppc64le/) — versão explicativa com contexto e motivação.
+> **Related post:** [Running VMs with KubeVirt on IBM Power9](https://llm-pt-ibm.github.io/posts/kubevirt_ppc64le/) — an explanatory version with context and motivation.
 
-## Visão Geral
+## Overview
 
-O KubeVirt oficialmente suporta x86_64, arm64 e s390x. Este repositório contém todos os patches, Dockerfiles e instruções necessários para compilar, instalar e executar o KubeVirt em ppc64le.
+KubeVirt officially supports x86_64, arm64, and s390x. This repository contains all the patches, Dockerfiles, and instructions needed to build, install, and run KubeVirt on ppc64le.
 
 ```
 kubevirt-ppc64le/
@@ -48,25 +48,25 @@ kubevirt-ppc64le/
     └── deploy.sh
 ```
 
-## Ambiente
+## Environment
 
-| Componente  | Versão                          |
+| Component   | Version                         |
 |-------------|---------------------------------|
 | Hardware    | IBM POWER9 (ppc64le)            |
-| SO          | AlmaLinux 8.10                  |
+| OS          | AlmaLinux 8.10                  |
 | Docker      | Docker CE 26.1.3                |
 | minikube    | v1.38.0 (docker + containerd)   |
 | Kubernetes  | v1.35.0                         |
 | KubeVirt    | v1.8.2                          |
 | Go          | 1.24.9                          |
 | GCC         | 8.5.0                           |
-| GPU         | 2x Tesla V100-SXM2-16GB        |
+| GPU         | 2x Tesla V100-SXM2-16GB         |
 
-## Pré-requisitos
+## Prerequisites
 
-### 1. Cluster Kubernetes
+### 1. Kubernetes Cluster
 
-O minikube é utilizado como cluster local. O CNI padrão (kindnet) não possui imagem ppc64le, então é necessário usar o Calico:
+minikube is used as the local cluster. The default CNI (kindnet) has no ppc64le image, so Calico must be used:
 
 ```bash
 sudo usermod -aG docker $USER
@@ -74,17 +74,17 @@ newgrp docker
 minikube start --driver=docker --container-runtime=containerd --cni=calico
 ```
 
-### 2. Registry local
+### 2. Local Registry
 
-Um registry local serve as imagens para o minikube:
+A local registry serves images to minikube:
 
 ```bash
 docker run -d -p 5000:5000 --restart=always --name registry registry:2
 ```
 
-### 3. Dependências de compilação
+### 3. Build Dependencies
 
-**libnbd 1.20** (o AlmaLinux 8 só tem 1.6):
+**libnbd 1.20** (AlmaLinux 8 only ships 1.6):
 
 ```bash
 curl -O https://download.libguestfs.org/libnbd/1.20-stable/libnbd-1.20.3.tar.gz
@@ -93,25 +93,25 @@ tar xzf libnbd-1.20.3.tar.gz && cd libnbd-1.20.3
 make -j$(nproc) && sudo make install
 ```
 
-**glibc-static** (para o container-disk):
+**glibc-static** (for the container-disk):
 
 ```bash
 sudo yum install -y glibc-static libvirt-devel
 ```
 
-## Compilação
+## Build
 
-### Clonar o KubeVirt
+### Clone KubeVirt
 
 ```bash
 git clone https://github.com/kubevirt/kubevirt.git -b v1.8.2
 cd kubevirt
 ```
 
-### Aplicar os patches
+### Apply the Patches
 
 ```bash
-# Arquivos novos — copiar para os diretórios corretos
+# New files — copy to the correct directories
 cp patches/node-labeller/kvm-caps-info-plugin_ppc64le.go \
    pkg/virt-handler/node-labeller/
 
@@ -124,7 +124,7 @@ cp patches/arch-defaulter/ppc64le.go \
 cp patches/converter/ppc64le.go \
    pkg/virt-launcher/virtwrap/converter/arch/
 
-# Patches em arquivos existentes
+# Patches to existing files
 git apply patches/build-tags/setsched.go.patch
 git apply patches/node-labeller/node-labeller.sh.patch
 git apply patches/virt-api/vmi-create-admitter.go.patch
@@ -137,7 +137,7 @@ git apply patches/runtime/virt-launcher-monitor.go.patch
 git apply patches/runtime/libvirt_helper.go.patch
 ```
 
-### Compilar os binários
+### Build the Binaries
 
 ```bash
 go build -o virt-operator ./cmd/virt-operator/
@@ -148,22 +148,22 @@ go build -o virt-launcher ./cmd/virt-launcher/
 go build -o virt-exportproxy ./cmd/virt-exportproxy/
 ```
 
-### Compilar o container-disk (C)
+### Build the container-disk (C)
 
 ```bash
 gcc -static -o container-disk cmd/container-disk-v2alpha/main.c -O2
 ```
 
-## Criação das imagens
+## Building the Images
 
-Copiar os binários e buildar as imagens:
+Copy the binaries and build the images:
 
 ```bash
 mkdir -p ~/kubevirt-images/bin
 cp virt-operator virt-api virt-controller virt-handler \
    virt-launcher virt-exportproxy container-disk ~/kubevirt-images/bin/
 
-# Copiar os Dockerfiles deste repositório
+# Copy the Dockerfiles from this repository
 cp -r dockerfiles/* ~/kubevirt-images/
 
 cd ~/kubevirt-images
@@ -176,7 +176,7 @@ for c in virt-launcher virt-handler virt-controller \
 done
 ```
 
-### Imagem containerDisk (CirrOS ppc64le)
+### containerDisk Image (CirrOS ppc64le)
 
 ```bash
 docker build -t 192.168.49.1:5000/kubevirt/cirros-disk:ppc64le \
@@ -186,14 +186,14 @@ docker push 192.168.49.1:5000/kubevirt/cirros-disk:ppc64le
 
 ## Deploy
 
-### Instalar o KubeVirt
+### Install KubeVirt
 
 ```bash
 kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/v1.8.2/kubevirt-operator.yaml
 kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/v1.8.2/kubevirt-cr.yaml
 ```
 
-### Configurar as imagens locais
+### Configure Local Images
 
 ```bash
 kubectl patch kubevirt kubevirt -n kubevirt --type merge \
@@ -201,33 +201,33 @@ kubectl patch kubevirt kubevirt -n kubevirt --type merge \
 kubectl delete pods -n kubevirt --all
 ```
 
-### Labels do node
+### Node Labels
 
 ```bash
 kubectl label node minikube cpu-model.node.kubevirt.io/POWER9=true --overwrite
 ```
 
-### Verificar os componentes
+### Verify Components
 
 ```bash
 kubectl get pods -n kubevirt
 ```
 
-Todos os pods devem estar `Running`.
+All pods should be `Running`.
 
 ```bash
 kubectl get kubevirt -n kubevirt
 ```
 
-Esperado: `PHASE: Deployed`.
+Expected: `PHASE: Deployed`.
 
-## Executando uma VM
+## Running a VM
 
 ```bash
 kubectl apply -f manifests/test-vmi.yaml
 ```
 
-O arquivo `manifests/test-vmi.yaml` contém:
+The `manifests/test-vmi.yaml` file contains:
 
 ```yaml
 apiVersion: kubevirt.io/v1
@@ -257,45 +257,45 @@ spec:
     name: containerdisk
 ```
 
-### Parâmetros importantes
+### Key Parameters
 
-| Parâmetro                       | Valor      | Motivo                                                                 |
+| Parameter                       | Value      | Reason                                                                 |
 |---------------------------------|------------|------------------------------------------------------------------------|
-| `architecture`                  | `ppc64le`  | Define a arquitetura da VM                                             |
-| `cpu.model`                     | `POWER9`   | `host-model` não funciona em virtualização aninhada                    |
-| `autoattachGraphicsDevice`      | `false`    | Workaround para conflito USB/VNC em pseries                            |
-| `machine.type`                  | `pseries`  | Tipo de máquina virtual para POWER                                     |
-| `disk.bus`                      | `virtio`   | Barramento de disco paravirtualizado                                   |
+| `architecture`                  | `ppc64le`  | Sets the VM architecture                                               |
+| `cpu.model`                     | `POWER9`   | `host-model` does not work under nested virtualization                 |
+| `autoattachGraphicsDevice`      | `false`    | Workaround for USB/VNC conflict on pseries                             |
+| `machine.type`                  | `pseries`  | Virtual machine type for POWER                                         |
+| `disk.bus`                      | `virtio`   | Paravirtualized disk bus                                               |
 
-### Verificar
+### Verify
 
 ```bash
 kubectl get vmi test-vmi -o wide
 ```
 
-Resultado esperado:
+Expected output:
 
 ```
 NAME       AGE     PHASE     IP               NODENAME   READY
 test-vmi   2m43s   Running   10.244.120.124   minikube   True
 ```
 
-### Acessar a VM
+### Access the VM
 
 ```bash
 virtctl console test-vmi
 ```
 
-Ou via kubectl:
+Or via kubectl:
 
 ```bash
 kubectl exec -it $(kubectl get pods | grep test-vmi | awk '{print $1}') \
   -c compute -- virsh -c qemu:///session list --all
 ```
 
-## Resultados
+## Results
 
-Dados coletados de dentro da VM:
+Data collected from inside the VM:
 
 ```
 $ uname -a
@@ -317,56 +317,56 @@ machine    : CHRP IBM pSeries (emulated by qemu)
 MMU        : Radix
 ```
 
-## Arquivos modificados
+## Modified Files
 
-### Arquivos novos
+### New Files
 
-| Arquivo                                                    | Função                                        |
-|------------------------------------------------------------|-----------------------------------------------|
-| `pkg/virt-handler/node-labeller/kvm-caps-info-plugin_ppc64le.go` | KVM capabilities para ppc64le (vazio)   |
-| `pkg/virt-api/webhooks/ppc64le.go`                         | Validação de VMI ppc64le                      |
-| `pkg/virt-launcher/virtwrap/api/arch-defaulter/ppc64le.go` | OS type defaults (arch=ppc64le, machine=pseries) |
-| `pkg/virt-launcher/virtwrap/converter/arch/ppc64le.go`     | Interface Converter para ppc64le              |
+| File                                                               | Purpose                                            |
+|--------------------------------------------------------------------|----------------------------------------------------|
+| `pkg/virt-handler/node-labeller/kvm-caps-info-plugin_ppc64le.go`  | KVM capabilities for ppc64le (stub)                |
+| `pkg/virt-api/webhooks/ppc64le.go`                                 | VMI validation for ppc64le                         |
+| `pkg/virt-launcher/virtwrap/api/arch-defaulter/ppc64le.go`         | OS type defaults (arch=ppc64le, machine=pseries)   |
+| `pkg/virt-launcher/virtwrap/converter/arch/ppc64le.go`             | Converter interface for ppc64le                    |
 
-### Arquivos modificados
+### Modified Files
 
-| Arquivo                                                    | Mudança                                       |
-|------------------------------------------------------------|-----------------------------------------------|
-| `pkg/hypervisor/common/setsched.go`                        | Build tag: adicionar `(linux && ppc64le)`      |
-| `pkg/virt-config/virt-config.go`                           | Defaults: `pseries`, `pseries*`               |
-| `pkg/virt-config/configuration.go`                         | Bloco `Ppc64le` no config, cases nos getters  |
-| `pkg/virt-api/.../vmi-create-admitter.go`                  | Cases `ppc64le` nos switches de validação     |
-| `cmd/virt-launcher-monitor/virt-launcher-monitor.go`       | Remover AmbientCaps                           |
-| `pkg/virt-launcher/virtwrap/util/libvirt_helper.go`        | Remover AmbientCaps                           |
-| `pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go` | Case `ppc64le` no NewArchDefaulter       |
-| `pkg/virt-launcher/virtwrap/converter/arch/converter.go`   | Constante e case `ppc64le` no NewConverter    |
-| `pkg/virt-launcher/virtwrap/converter/compute/graphics.go` | Video device `virtio` para ppc64le            |
-| `node-labeller.sh`                                         | Suporte ppc64le, `libvirtd` em vez de `virtqemud` |
+| File                                                               | Change                                             |
+|--------------------------------------------------------------------|----------------------------------------------------|
+| `pkg/hypervisor/common/setsched.go`                                | Build tag: add `(linux && ppc64le)`                |
+| `pkg/virt-config/virt-config.go`                                   | Defaults: `pseries`, `pseries*`                    |
+| `pkg/virt-config/configuration.go`                                 | `Ppc64le` block in config, cases in getters        |
+| `pkg/virt-api/.../vmi-create-admitter.go`                          | `ppc64le` cases in validation switches             |
+| `cmd/virt-launcher-monitor/virt-launcher-monitor.go`               | Remove AmbientCaps                                 |
+| `pkg/virt-launcher/virtwrap/util/libvirt_helper.go`                | Remove AmbientCaps                                 |
+| `pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go`    | `ppc64le` case in NewArchDefaulter                 |
+| `pkg/virt-launcher/virtwrap/converter/arch/converter.go`           | Constant and `ppc64le` case in NewConverter        |
+| `pkg/virt-launcher/virtwrap/converter/compute/graphics.go`         | `virtio` video device for ppc64le                  |
+| `node-labeller.sh`                                                 | ppc64le support, `libvirtd` instead of `virtqemud` |
 
-### Dependências compiladas do fonte
+### Dependencies Built from Source
 
-| Dependência    | Versão | Motivo                                     |
-|----------------|--------|--------------------------------------------|
-| libnbd         | 1.20.3 | AlmaLinux 8 só tem 1.6, virt-launcher requer 1.18+ |
+| Dependency | Version | Reason                                                   |
+|------------|---------|----------------------------------------------------------|
+| libnbd     | 1.20.3  | AlmaLinux 8 only ships 1.6; virt-launcher requires 1.18+ |
 
-## Limitações conhecidas
+## Known Limitations
 
-- **VNC desabilitado**: `autoattachGraphicsDevice: false` é necessário como workaround para conflito USB em pseries.
-- **CPU model manual**: é necessário especificar `cpu.model: POWER9` na VMI porque `host-model` não funciona em virtualização aninhada.
-- **Live migration indisponível**: bridge networking não permite migração; necessário masquerade.
+- **VNC disabled**: `autoattachGraphicsDevice: false` is required as a workaround for a USB conflict on pseries.
+- **Manual CPU model**: `cpu.model: POWER9` must be set explicitly in the VMI because `host-model` does not work under nested virtualization.
+- **Live migration unavailable**: bridge networking does not allow migration; masquerade is required.
 
-## Próximos passos
+## Next Steps
 
-- Resolver o conflito USB/Graphics para habilitar VNC;
-- Ajustar o CPU model default para ppc64le no código;
-- Explorar GPU passthrough (V100) via KubeVirt;
-- Testar outras distros como containerDisk (Fedora, Ubuntu, AlmaLinux);
-- Contribuir os patches ao KubeVirt upstream;
-- Validar no Single Node OpenShift (OCP 4.21).
+- Resolve the USB/Graphics conflict to enable VNC;
+- Set the default CPU model for ppc64le in code;
+- Explore GPU passthrough (V100) via KubeVirt;
+- Test other distros as containerDisk images (Fedora, Ubuntu, AlmaLinux);
+- Upstream the patches to KubeVirt;
+- Validate on Single Node OpenShift (OCP 4.21).
 
-## Referências
+## References
 
 - [KubeVirt Documentation](https://kubevirt.io/user-guide/)
 - [KubeVirt GitHub](https://github.com/kubevirt/kubevirt)
 - [KubeVirt Architecture](https://kubevirt.io/user-guide/architecture/)
-- [Post do blog: Executando VMs com KubeVirt na IBM Power9](https://llm-pt-ibm.github.io/posts/kubevirt_ppc64le/)
+- [Blog post: Running VMs with KubeVirt on IBM Power9](https://llm-pt-ibm.github.io/posts/kubevirt_ppc64le/)
