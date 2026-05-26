@@ -1,0 +1,21 @@
+diff --git a/pkg/virt-launcher/virtwrap/converter/arch/converter.go b/pkg/virt-launcher/virtwrap/converter/arch/converter.go
+index a9d6db1869..4eed29e371 100644
+--- a/pkg/virt-launcher/virtwrap/converter/arch/converter.go
++++ b/pkg/virt-launcher/virtwrap/converter/arch/converter.go
+@@ -23,6 +23,7 @@ import (
+ )
+ 
+ const (
++	ppc64le = "ppc64le"
+ 	amd64 = "amd64"
+ 	arm64 = "arm64"
+ 	s390x = "s390x"
+@@ -47,6 +48,8 @@ func NewConverter(arch string) Converter {
+ 	switch arch {
+ 	case arm64:
+ 		return converterARM64{}
++	case ppc64le:
++		return converterPPC64LE{}
+ 	case s390x:
+ 		return converterS390X{}
+ 	case amd64:

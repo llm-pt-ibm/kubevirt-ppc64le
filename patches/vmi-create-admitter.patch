@@ -1,0 +1,23 @@
+diff --git a/pkg/virt-api/webhooks/validating-webhook/admitters/vmi-create-admitter.go b/pkg/virt-api/webhooks/validating-webhook/admitters/vmi-create-admitter.go
+index 508f462da0..27c00d7e2d 100644
+--- a/pkg/virt-api/webhooks/validating-webhook/admitters/vmi-create-admitter.go
++++ b/pkg/virt-api/webhooks/validating-webhook/admitters/vmi-create-admitter.go
+@@ -161,6 +161,8 @@ func ValidateVirtualMachineInstancePerArch(field *k8sfield.Path, spec *v1.Virtua
+ 		causes = append(causes, webhooks.ValidateVirtualMachineInstanceS390XSetting(field, spec)...)
+ 	case "arm64":
+ 		causes = append(causes, webhooks.ValidateVirtualMachineInstanceArm64Setting(field, spec)...)
++	case "ppc64le":
++		causes = append(causes, webhooks.ValidateVirtualMachineInstancePpc64leSetting(field, spec)...)
+ 	default:
+ 		causes = append(causes, metav1.StatusCause{
+ 			Type:    metav1.CauseTypeFieldValueInvalid,
+@@ -596,6 +598,9 @@ func validateLaunchSecurity(field *k8sfield.Path, spec *v1.VirtualMachineInstanc
+ 		causes = append(causes, webhooks.ValidateLaunchSecurityAmd64(field, spec, config)...)
+ 	case "s390x":
+ 		causes = append(causes, webhooks.ValidateLaunchSecurityS390x(field, spec, config)...)
++	case "ppc64le":
++		// ppc64le does not support launchSecurity
++		return causes
+ 	default:
+ 		causes = append(causes, metav1.StatusCause{
+ 			Type:    metav1.CauseTypeFieldValueInvalid,

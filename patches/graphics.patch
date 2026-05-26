@@ -1,0 +1,29 @@
+diff --git a/pkg/virt-launcher/virtwrap/converter/compute/graphics.go b/pkg/virt-launcher/virtwrap/converter/compute/graphics.go
+index 815abaf8a5..8bb2ce7fd5 100644
+--- a/pkg/virt-launcher/virtwrap/converter/compute/graphics.go
++++ b/pkg/virt-launcher/virtwrap/converter/compute/graphics.go
+@@ -86,6 +86,8 @@ func (g GraphicsDomainConfigurator) configureVideoDevice(vmi *v1.VirtualMachineI
+ 		g.configureARM64VideoDevice(domain)
+ 	case "s390x":
+ 		g.configureS390XVideoDevice(domain)
++	case "ppc64le":
++		g.configurePPC64LEVideoDevice(domain)
+ 	}
+ }
+ 
+@@ -113,6 +115,15 @@ func (g GraphicsDomainConfigurator) configureAMD64VideoDevice(vmi *v1.VirtualMac
+ 	}
+ }
+ 
++func (g GraphicsDomainConfigurator) configurePPC64LEVideoDevice(domain *api.Domain) {
++	domain.Spec.Devices.Video = []api.Video{{
++		Model: api.VideoModel{
++			Type:  "virtio",
++			Heads: pointer.P(graphicsDeviceDefaultHeads),
++		},
++	}}
++}
++
+ func (g GraphicsDomainConfigurator) configureARM64VideoDevice(domain *api.Domain) {
+ 	// For arm64, qemu-kvm only support virtio-gpu display device, so set it as default video device.
+ 	domain.Spec.Devices.Video = []api.Video{

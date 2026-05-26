@@ -1,0 +1,25 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachineInstance
+metadata:
+  name: test-vmi
+spec:
+  architecture: ppc64le
+  domain:
+    cpu:
+      model: POWER9
+      cores: 1
+    devices:
+      autoattachGraphicsDevice: false
+      disks:
+      - disk:
+          bus: virtio
+        name: containerdisk
+    machine:
+      type: pseries
+    resources:
+      requests:
+        memory: 512Mi
+  volumes:
+  - containerDisk:
+      image: 192.168.49.1:5000/kubevirt/cirros-disk:ppc64le
+    name: containerdisk

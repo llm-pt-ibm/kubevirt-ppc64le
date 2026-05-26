@@ -1,0 +1,13 @@
+diff --git a/pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go b/pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go
+index 5de89174b3..43ee3d1498 100644
+--- a/pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go
++++ b/pkg/virt-launcher/virtwrap/api/arch-defaulter/archdefaults.go
+@@ -32,6 +32,8 @@ func NewArchDefaulter(arch string) ArchDefaulter {
+ 		return defaulterS390X{}
+ 	case "amd64":
+ 		return defaulterAMD64{}
++	case "ppc64le":
++		return defaulterPPC64LE{}
+ 	default:
+ 		log.Log.Warning("Trying to create an arch defaulter from an unknown arch: " + arch + ". Falling back to AMD64")
+ 		return defaulterAMD64{}
