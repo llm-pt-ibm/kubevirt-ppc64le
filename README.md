@@ -2,7 +2,7 @@
 
 Adaptation of [KubeVirt](https://kubevirt.io/) v1.8.2 for the IBM POWER9 architecture (ppc64le), enabling the creation and management of virtual machines via Kubernetes on an architecture not officially supported.
 
-> **Related post:** [Running VMs with KubeVirt on IBM Power9]([https://llm-pt-ibm.github.io/posts/kubevirt_ppc64le/](https://llm-pt-ibm.github.io/en/posts/kubevirt-post/)) — an explanatory version with context and motivation.
+> **Related post:** [Running VMs with KubeVirt on IBM Power9](https://llm-pt-ibm.github.io/en/posts/kubevirt-post/) — an explanatory version with context and motivation.
 
 ## Overview
 
