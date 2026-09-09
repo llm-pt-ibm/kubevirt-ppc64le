@@ -1,0 +1,15 @@
+diff --git a/pkg/virt-handler/device-manager/device_plugin_base.go b/pkg/virt-handler/device-manager/device_plugin_base.go
+index eb118f870e..926c1e8148 100644
+--- a/pkg/virt-handler/device-manager/device_plugin_base.go
++++ b/pkg/virt-handler/device-manager/device_plugin_base.go
+@@ -80,7 +80,9 @@ func (dpi *DevicePluginBase) ListAndWatch(_ *pluginapi.Empty, s pluginapi.Device
+ 	if err := s.Send(&pluginapi.ListAndWatchResponse{Devices: emptyList}); err != nil {
+ 		log.DefaultLogger().Reason(err).Infof("%s device plugin failed to deregister", dpi.resourceName)
+ 	}
+-	close(dpi.deregistered)
++	if !IsChanClosed(dpi.deregistered) {
++		close(dpi.deregistered)
++	}
+ 	return nil
+ }
+ 
